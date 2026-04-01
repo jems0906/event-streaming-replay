@@ -1,0 +1,4 @@
+﻿.venv/
+.local-events/
+__pycache__/
+*.pyc

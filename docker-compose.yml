@@ -1,0 +1,152 @@
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.8
+    container_name: redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --check=false
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+      - --set
+      - redpanda.auto_create_topics_enabled=true
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers=localhost:9092 | grep -q 'Healthy: true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.101.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./observability/otel/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+      - "14268:14268"
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.7.0
+    container_name: kafka-exporter
+    command:
+      - --kafka.server=redpanda:9092
+      - --log.enable-sarama
+    ports:
+      - "9308:9308"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    container_name: gateway
+    environment:
+      - SERVICE_NAME=gateway
+      - ENVIRONMENT=dev
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - INCOMING_TOPIC=incoming_requests
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+      - CORE_SERVICE_URL=http://core:8001
+    ports:
+      - "8000:8000"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  core:
+    build:
+      context: .
+      dockerfile: services/core/Dockerfile
+    container_name: core
+    environment:
+      - SERVICE_NAME=core
+      - ENVIRONMENT=dev
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - INCOMING_TOPIC=incoming_requests
+      - PROCESSED_TOPIC=processed_requests
+      - DLQ_TOPIC=dlq_requests
+      - CONSUMER_GROUP=core-consumer-group
+      - MAX_RETRIES=3
+      - RETRY_BASE_DELAY_MS=200
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+    ports:
+      - "8001:8001"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  replay:
+    build:
+      context: .
+      dockerfile: services/replay/Dockerfile
+    container_name: replay
+    environment:
+      - SERVICE_NAME=replay
+      - ENVIRONMENT=dev
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+      - INCOMING_TOPIC=incoming_requests
+      - DEFAULT_REPLAY_TARGET=http://gateway:8000/ingest
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+    ports:
+      - "8002:8002"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+networks:
+  default:
+    name: event-replay-net
