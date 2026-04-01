@@ -92,6 +92,38 @@ Notes:
 - `TRACING_ENABLED=false` disables OTLP exporter when collector/Jaeger is not running.
 - Metrics endpoints still work locally at `/metrics` for each service.
 
+## Deploy to Render
+
+This repository includes a Render Blueprint at `render.yaml`.
+
+Important:
+
+- Use `MESSAGE_BACKEND=kafka` on Render.
+- Do not use `filesystem` mode in production across multiple services.
+- Provision a managed Kafka broker (Redpanda Cloud, Confluent, etc.) and set broker credentials.
+
+Deploy steps:
+
+1. In Render, choose **New +** -> **Blueprint**.
+2. Connect this GitHub repository.
+3. Render will detect `render.yaml` and create 3 web services:
+  - `event-streaming-gateway`
+  - `event-streaming-core`
+  - `event-streaming-replay`
+4. Replace all `REPLACE_ME` Kafka values with real credentials.
+5. Deploy.
+
+Post-deploy checks:
+
+- Open each service `/health` endpoint.
+- Test ingest: `POST /ingest` on gateway.
+- Test replay: `POST /replay` on replay service.
+
+If Render assigns different service URLs than the defaults in `render.yaml`, update:
+
+- `CORE_PROCESS_URL` in gateway
+- `DEFAULT_REPLAY_TARGET` in replay
+
 ## Smoke Test
 
 1. Send live traffic:
