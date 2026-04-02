@@ -12,19 +12,9 @@ services:
       - key: ENVIRONMENT
         value: prod
       - key: MESSAGE_BACKEND
-        value: kafka
+        value: filesystem
       - key: CORE_PROCESS_URL
         value: https://event-streaming-core.onrender.com/process
-      - key: KAFKA_BOOTSTRAP_SERVERS
-        value: REPLACE_ME
-      - key: KAFKA_SECURITY_PROTOCOL
-        value: SASL_SSL
-      - key: KAFKA_SASL_MECHANISM
-        value: PLAIN
-      - key: KAFKA_SASL_USERNAME
-        value: REPLACE_ME
-      - key: KAFKA_SASL_PASSWORD
-        value: REPLACE_ME
       - key: TRACING_ENABLED
         value: "false"
 
@@ -41,19 +31,7 @@ services:
       - key: ENVIRONMENT
         value: prod
       - key: MESSAGE_BACKEND
-        value: kafka
-      - key: CONSUMER_GROUP
-        value: core-consumer-group
-      - key: KAFKA_BOOTSTRAP_SERVERS
-        value: REPLACE_ME
-      - key: KAFKA_SECURITY_PROTOCOL
-        value: SASL_SSL
-      - key: KAFKA_SASL_MECHANISM
-        value: PLAIN
-      - key: KAFKA_SASL_USERNAME
-        value: REPLACE_ME
-      - key: KAFKA_SASL_PASSWORD
-        value: REPLACE_ME
+        value: filesystem
       - key: TRACING_ENABLED
         value: "false"
 
@@ -70,18 +48,8 @@ services:
       - key: ENVIRONMENT
         value: prod
       - key: MESSAGE_BACKEND
-        value: kafka
+        value: filesystem
       - key: DEFAULT_REPLAY_TARGET
         value: https://event-streaming-gateway.onrender.com/ingest
-      - key: KAFKA_BOOTSTRAP_SERVERS
-        value: REPLACE_ME
-      - key: KAFKA_SECURITY_PROTOCOL
-        value: SASL_SSL
-      - key: KAFKA_SASL_MECHANISM
-        value: PLAIN
-      - key: KAFKA_SASL_USERNAME
-        value: REPLACE_ME
-      - key: KAFKA_SASL_PASSWORD
-        value: REPLACE_ME
       - key: TRACING_ENABLED
         value: "false"
