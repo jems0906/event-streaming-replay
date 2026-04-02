@@ -70,17 +70,17 @@ function Start-ServiceWindow {
     $venvActivateValue = Escape-SingleQuotedPowerShellString $venvActivate
 
     $envLines = @(
-        "$env:ENVIRONMENT='$environmentValue'",
-        "$env:SERVICE_NAME='$serviceNameValue'",
-        "$env:MESSAGE_BACKEND='$messageBackendValue'",
-        "$env:EVENT_STORE_DIR='$eventStoreDirValue'",
-        "$env:CORE_PROCESS_URL='$coreProcessUrlValue'",
-        "$env:KAFKA_BOOTSTRAP_SERVERS='$kafkaBootstrapValue'",
-        "$env:KAFKA_SECURITY_PROTOCOL='$kafkaProtocolValue'",
-        "$env:KAFKA_SASL_MECHANISM='$kafkaMechanismValue'",
-        "$env:KAFKA_SASL_USERNAME='$kafkaUsernameValue'",
-        "$env:KAFKA_SASL_PASSWORD='$kafkaPasswordValue'",
-        "$env:TRACING_ENABLED='$tracingValue'"
+        "`$env:ENVIRONMENT='$environmentValue'",
+        "`$env:SERVICE_NAME='$serviceNameValue'",
+        "`$env:MESSAGE_BACKEND='$messageBackendValue'",
+        "`$env:EVENT_STORE_DIR='$eventStoreDirValue'",
+        "`$env:CORE_PROCESS_URL='$coreProcessUrlValue'",
+        "`$env:KAFKA_BOOTSTRAP_SERVERS='$kafkaBootstrapValue'",
+        "`$env:KAFKA_SECURITY_PROTOCOL='$kafkaProtocolValue'",
+        "`$env:KAFKA_SASL_MECHANISM='$kafkaMechanismValue'",
+        "`$env:KAFKA_SASL_USERNAME='$kafkaUsernameValue'",
+        "`$env:KAFKA_SASL_PASSWORD='$kafkaPasswordValue'",
+        "`$env:TRACING_ENABLED='$tracingValue'"
     )
 
     $commandParts = @(
