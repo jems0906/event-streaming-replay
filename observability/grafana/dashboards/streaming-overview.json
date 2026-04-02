@@ -309,6 +309,80 @@
       ],
       "title": "Core Performance",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.9 },
+              { "color": "red", "value": 0.99 }
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 7,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(gateway_request_latency_seconds_bucket{le=\"0.5\"}[5m])) / sum(rate(gateway_request_latency_seconds_count[5m]))",
+          "legendFormat": "% requests < 500ms",
+          "refId": "A"
+        }
+      ],
+      "title": "SLO: Requests Under 500ms (%)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 8,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(kafka_topic_partition_current_offset{topic=\"incoming_requests\"}[1m])) by (topic)",
+          "legendFormat": "incoming_requests offset/s",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(kafka_topic_partition_current_offset{topic=\"processed_requests\"}[1m])) by (topic)",
+          "legendFormat": "processed_requests offset/s",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(kafka_consumergroup_lag) by (consumergroup)",
+          "legendFormat": "consumer lag - {{consumergroup}}",
+          "refId": "C"
+        }
+      ],
+      "title": "Kafka Topic Throughput & Lag",
+      "type": "timeseries"
     }
   ],
   "refresh": "10s",

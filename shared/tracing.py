@@ -8,6 +8,12 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+try:
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    _HTTPX_INSTRUMENTOR = HTTPXClientInstrumentor()
+except ImportError:
+    _HTTPX_INSTRUMENTOR = None
+
 
 _initialized = False
 logger = logging.getLogger(__name__)
@@ -37,6 +43,13 @@ def init_tracing(service_name: str) -> None:
     except Exception as exc:
         logger.warning("Tracing init failed, continuing without exporter: %s", exc)
         _initialized = True
+
+    # Instrument outgoing httpx calls to propagate W3C trace context
+    if _HTTPX_INSTRUMENTOR is not None:
+        try:
+            _HTTPX_INSTRUMENTOR.instrument()
+        except Exception as exc:
+            logger.warning("httpx instrumentation failed: %s", exc)
 
 
 def instrument_fastapi(app) -> None:

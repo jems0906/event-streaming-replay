@@ -48,8 +48,12 @@ REPLAY_LATENCY = Histogram(
 
 
 class ReplayRequest(BaseModel):
+    # ISO-8601 time window (e.g. "2026-04-02T10:00:00Z")
     start_time_iso: Optional[str] = Field(default=None)
     end_time_iso: Optional[str] = Field(default=None)
+    # Unix-epoch millisecond time window (alternative to ISO)
+    from_timestamp_ms: Optional[int] = Field(default=None)
+    to_timestamp_ms: Optional[int] = Field(default=None)
     environment: Optional[str] = Field(default=None)
     speedup_factor: float = Field(default=1.0, gt=0)
     max_events: int = Field(default=1000, gt=0, le=100000)
@@ -80,8 +84,9 @@ def _parse_iso_ms(value: Optional[str]) -> Optional[int]:
 
 
 async def _collect_events(req: ReplayRequest) -> List[Dict[str, Any]]:
-    start_ms = _parse_iso_ms(req.start_time_iso)
-    end_ms = _parse_iso_ms(req.end_time_iso)
+    # Accept either ISO or epoch-ms time bounds
+    start_ms = _parse_iso_ms(req.start_time_iso) or req.from_timestamp_ms
+    end_ms = _parse_iso_ms(req.end_time_iso) or req.to_timestamp_ms
 
     if MESSAGE_BACKEND == "filesystem":
         collected = read_topic_events(EVENT_STORE_DIR, INCOMING_TOPIC)
