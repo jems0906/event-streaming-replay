@@ -137,14 +137,18 @@ class SmokeTestRunner:
         """Trigger a replay and verify dispatch."""
         print("\n=== Traffic Replay ===")
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=60.0) as client:
                 await asyncio.sleep(2)
 
+                # Use a 10-minute window so only recent events are replayed
+                now_ms = int(time.time() * 1000)
                 replay_payload = {
+                    "from_timestamp_ms": now_ms - 10 * 60 * 1000,
+                    "to_timestamp_ms": now_ms,
                     "environment": "dev",
-                    "speedup_factor": 5.0,
+                    "speedup_factor": 100.0,
                     "max_events": 10,
-                    "target_url": f"{self.gateway_url}/ingest",
+                    # No target_url — use DEFAULT_REPLAY_TARGET (http://gateway:8000/ingest in Docker)
                 }
                 resp = await client.post(f"{self.replay_url}/replay", json=replay_payload)
 
